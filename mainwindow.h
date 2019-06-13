@@ -17,7 +17,7 @@ public:
     ~MainWindow();
 
 private slots:
-    void loadInStrings(char *fileLocation);
+    bool loadInStrings(char *fileLocation);
 
     void on_listWidget_itemClicked(QListWidgetItem *item);
 
@@ -26,6 +26,10 @@ private slots:
     void on_pushButton_2_clicked();
 
     void on_actionopen_triggered();
+
+    void on_textEdit_textChanged();
+
+    void on_actionexit_triggered();
 
 private:
     Ui::MainWindow *ui;

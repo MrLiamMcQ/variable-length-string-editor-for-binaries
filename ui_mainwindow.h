@@ -1,7 +1,7 @@
 /********************************************************************************
 ** Form generated from reading UI file 'mainwindow.ui'
 **
-** Created by: Qt User Interface Compiler version 5.7.1
+** Created by: Qt User Interface Compiler version 5.11.1
 **
 ** WARNING! All changes made in this file will be lost when recompiling UI file!
 ********************************************************************************/
@@ -12,9 +12,7 @@
 #include <QtCore/QVariant>
 #include <QtWidgets/QAction>
 #include <QtWidgets/QApplication>
-#include <QtWidgets/QButtonGroup>
 #include <QtWidgets/QGridLayout>
-#include <QtWidgets/QHeaderView>
 #include <QtWidgets/QListWidget>
 #include <QtWidgets/QMainWindow>
 #include <QtWidgets/QMenu>
@@ -31,12 +29,13 @@ class Ui_MainWindow
 {
 public:
     QAction *actionopen;
+    QAction *actionexit;
     QWidget *centralWidget;
     QGridLayout *gridLayout;
     QListWidget *listWidget;
-    QTextEdit *textEdit;
     QPushButton *pushButton_2;
     QPushButton *pushButton;
+    QTextEdit *textEdit;
     QMenuBar *menuBar;
     QMenu *menuString_Editor;
     QStatusBar *statusBar;
@@ -49,6 +48,8 @@ public:
         MainWindow->resize(718, 383);
         actionopen = new QAction(MainWindow);
         actionopen->setObjectName(QStringLiteral("actionopen"));
+        actionexit = new QAction(MainWindow);
+        actionexit->setObjectName(QStringLiteral("actionexit"));
         centralWidget = new QWidget(MainWindow);
         centralWidget->setObjectName(QStringLiteral("centralWidget"));
         gridLayout = new QGridLayout(centralWidget);
@@ -70,9 +71,8 @@ public:
         listWidget->setFont(font);
         listWidget->viewport()->setProperty("cursor", QVariant(QCursor(Qt::PointingHandCursor)));
         listWidget->setFocusPolicy(Qt::NoFocus);
-        listWidget->setStyleSheet(QLatin1String("QListWidget::item{ border: 1px solid lightgrey} \n"
-"QListWidget::item:hover{background-color: rgb(229, 243, 255);color : black; }\n"
-"QListWidget::item:selected{background-color: rgb(205, 232, 255);color : black;}"));
+        listWidget->setAutoFillBackground(false);
+        listWidget->setStyleSheet(QStringLiteral(""));
         listWidget->setFrameShape(QFrame::Box);
         listWidget->setEditTriggers(QAbstractItemView::DoubleClicked|QAbstractItemView::EditKeyPressed);
         listWidget->setProperty("showDropIndicator", QVariant(true));
@@ -81,6 +81,16 @@ public:
         listWidget->setSelectionRectVisible(true);
 
         gridLayout->addWidget(listWidget, 1, 0, 1, 1);
+
+        pushButton_2 = new QPushButton(centralWidget);
+        pushButton_2->setObjectName(QStringLiteral("pushButton_2"));
+
+        gridLayout->addWidget(pushButton_2, 3, 0, 1, 1);
+
+        pushButton = new QPushButton(centralWidget);
+        pushButton->setObjectName(QStringLiteral("pushButton"));
+
+        gridLayout->addWidget(pushButton, 3, 1, 1, 1);
 
         textEdit = new QTextEdit(centralWidget);
         textEdit->setObjectName(QStringLiteral("textEdit"));
@@ -95,16 +105,6 @@ public:
         textEdit->setFont(font1);
 
         gridLayout->addWidget(textEdit, 1, 1, 1, 1);
-
-        pushButton_2 = new QPushButton(centralWidget);
-        pushButton_2->setObjectName(QStringLiteral("pushButton_2"));
-
-        gridLayout->addWidget(pushButton_2, 3, 0, 1, 1);
-
-        pushButton = new QPushButton(centralWidget);
-        pushButton->setObjectName(QStringLiteral("pushButton"));
-
-        gridLayout->addWidget(pushButton, 3, 1, 1, 1);
 
         MainWindow->setCentralWidget(centralWidget);
         menuBar = new QMenuBar(MainWindow);
@@ -122,8 +122,10 @@ public:
 
         menuBar->addAction(menuString_Editor->menuAction());
         menuString_Editor->addAction(actionopen);
+        menuString_Editor->addAction(actionexit);
         mainToolBar->addSeparator();
         mainToolBar->addAction(actionopen);
+        mainToolBar->addAction(actionexit);
 
         retranslateUi(MainWindow);
 
@@ -132,11 +134,12 @@ public:
 
     void retranslateUi(QMainWindow *MainWindow)
     {
-        MainWindow->setWindowTitle(QApplication::translate("MainWindow", "MainWindow", Q_NULLPTR));
-        actionopen->setText(QApplication::translate("MainWindow", "open", Q_NULLPTR));
-        pushButton_2->setText(QApplication::translate("MainWindow", "Make the change to the exe", Q_NULLPTR));
-        pushButton->setText(QApplication::translate("MainWindow", "Save changes to text", Q_NULLPTR));
-        menuString_Editor->setTitle(QApplication::translate("MainWindow", "File", Q_NULLPTR));
+        MainWindow->setWindowTitle(QApplication::translate("MainWindow", "MainWindow", nullptr));
+        actionopen->setText(QApplication::translate("MainWindow", "open", nullptr));
+        actionexit->setText(QApplication::translate("MainWindow", "exit", nullptr));
+        pushButton_2->setText(QApplication::translate("MainWindow", "Make the change to the exe", nullptr));
+        pushButton->setText(QApplication::translate("MainWindow", "view file in explorer", nullptr));
+        menuString_Editor->setTitle(QApplication::translate("MainWindow", "File", nullptr));
     } // retranslateUi
 
 };

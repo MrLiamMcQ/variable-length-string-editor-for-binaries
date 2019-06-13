@@ -6,106 +6,37 @@
 #include "pch.h"
 #include <sys/stat.h>
 #include "QFileDialog"
+#include <QMessageBox>
+#include <QColor>
+#include "Shlobj.h"
+#include <QProcess>
 
-void loadBinary(const char* filePath,char*& fileData,int& fileLenght) {
+bool loadBinary(const char* filePath,char*& fileData,int& fileLenght) {
+    free(fileData);
+
     FILE* fileHandel;
     fopen_s(&fileHandel, filePath, "rb+");
     fseek(fileHandel, 0, SEEK_END);
-    fileLenght = ftell(fileHandel);
+    int tempFileLenght = ftell(fileHandel);
     fseek(fileHandel, 0, SEEK_SET);
-    fileData = (char*)malloc(fileLenght);
-    fread(fileData, 1, fileLenght, fileHandel);
+    char* buffer = (char*)malloc(tempFileLenght);
+    fread(buffer, 1, tempFileLenght, fileHandel);
     fclose(fileHandel);
-}
 
-std::vector<stringReferenceClass> getStringData(char*& fileData) {
-    std::vector<stringReferenceClass> stringRefrences;
+    PIMAGE_DOS_HEADER pDosHeader = (PIMAGE_DOS_HEADER)buffer;
+    PIMAGE_FILE_HEADER FH = (PIMAGE_FILE_HEADER)(buffer + pDosHeader->e_lfanew + sizeof(DWORD));
 
-    PIMAGE_DOS_HEADER pDosHeader = (PIMAGE_DOS_HEADER)fileData;
-    PIMAGE_FILE_HEADER FH = (PIMAGE_FILE_HEADER)(fileData + pDosHeader->e_lfanew + sizeof(DWORD));
-    PIMAGE_OPTIONAL_HEADER OH = (PIMAGE_OPTIONAL_HEADER)(fileData + pDosHeader->e_lfanew + sizeof(DWORD) + sizeof(IMAGE_FILE_HEADER));
-    PIMAGE_SECTION_HEADER SH = (PIMAGE_SECTION_HEADER)(fileData + pDosHeader->e_lfanew + sizeof(IMAGE_NT_HEADERS));
-
-    DWORD codeSectionAddress;
-    DWORD sizeOfCodeSection;
-
-    for (int i = 0; i < FH->NumberOfSections; i++) {
-        char* sectionName = (char*)SH[i].Name;
-        DWORD addresOfSectionData = SH[i].PointerToRawData;
-        DWORD sizeOfSection = SH[i].Misc.VirtualSize;
-        int currentIndexOfSections = i;
-
-        //std::cout << sectionName << "\n" << "pointer to data " << std::hex << addresOfSectionData << "\n" << "size of section "<< sizeOfSection << "\n";
-        std::cout << std::hex;
-
-        if (strcmp(sectionName, ".text") == 0) {
-            codeSectionAddress = addresOfSectionData;
-            sizeOfCodeSection = sizeOfSection;
-        }
-
-        if (strcmp(sectionName, ".rdata") != 0)
-            continue;
-
-        int letterCounter = 0;
-        std::string sString = "";
-        int currentStringOffset;
-
-        for (int i = addresOfSectionData; i < addresOfSectionData + sizeOfSection; i++) {
-            if (isLetter(fileData[i])) {
-                sString.insert(letterCounter, 1, (char)fileData[i]);
-
-                letterCounter++;
-            }
-            else if (letterCounter != 0) {
-                sString.insert(letterCounter, 1, (char)'\0');
-
-                int symbolCount;
-                float persentageSymbols;
-                DWORD referenceToString = 0x0;
-                DWORD addres;
-
-                if (letterCounter < 2)
-                    goto end;
-
-                symbolCount = numberOfSymbols(sString.c_str());
-                persentageSymbols = (float)((float)symbolCount / letterCounter);
-
-                if (persentageSymbols >= 0.5)
-                    goto end;
-
-                // usless strings after the point RSDS
-                if (sString.find("RSDS") == 0)
-                    break;
-
-                referenceToString = (i - letterCounter);
-                addres = getVirtualAddressFromPyisical(referenceToString, addresOfSectionData, OH->ImageBase, SH[currentIndexOfSections].VirtualAddress);
-
-                stringRefrences.emplace_back(referenceToString, addres, sString);
-
-            end:
-                sString.clear();
-                letterCounter = 0;
-            }
-        }
-
+    if(FH->Machine != (WORD)0x14c){// not 32 bit
+        QMessageBox Msgbox;
+        Msgbox.setText("Error - binary selected is not 32 bit");
+        Msgbox.exec();
+        return false;
     }
 
-    auto spawnThreads = [&](int noOfThreads) {
-        std::mutex mainMutex;
-        int sizeForEachThread = sizeOfCodeSection / noOfThreads;
-        std::vector<std::thread> threads(noOfThreads);
-        for (int i = 0; i < noOfThreads; i++) {
-            threads[i] = std::thread(findStringReference, std::ref(fileData), std::ref(stringRefrences), codeSectionAddress + (i*sizeForEachThread), sizeForEachThread, std::ref(mainMutex));
-        }
-        for (auto& th : threads) {
-            th.join();
-        }
-    };
-    spawnThreads(4);
-
-    return stringRefrences;
+    fileData = buffer;
+    fileLenght = tempFileLenght;
+    return true;
 }
-
 
 QListWidgetItem * currentItem;
 char* exeFileAndPath;
@@ -113,14 +44,12 @@ std::vector<stringReferenceClass> stringRefrences;
 char* fileData;
 int fileLenght;
 
-void MainWindow::loadInStrings(char* fileLocation){
+bool MainWindow::loadInStrings(char* fileLocation){
     if(fileLocation==NULL)
-        return;
+        return false;
 
     std::string saveFilePath = fileLocation;
     saveFilePath.append(".txt");
-
-    loadBinary(fileLocation, fileData, fileLenght);
 
     struct stat buffer;
     if (stat(saveFilePath.c_str(), &buffer) == 0)
@@ -131,9 +60,19 @@ void MainWindow::loadInStrings(char* fileLocation){
     }
 
     for (auto& a : stringRefrences) {
-        ui->listWidget->addItem(a.string.c_str());
+        QListWidgetItem* item = new QListWidgetItem(a.string.c_str());
+
+        if(a.stringReferenceLocations.size()>0)
+            item->setForeground(Qt::darkGreen);//item->setBackground(QColor("#e7eecc"));
+        else item->setForeground(Qt::darkRed);//item->setBackground(QColor("#7fc97f"));
+
+        ui->listWidget->addItem(item);
+
+        //QWidget *widget = new QWidget();
+        //ui->listWidget->setItemWidget(item,widget);
     }
 
+    return true;
 }
 
 MainWindow::MainWindow(QWidget *parent) :
@@ -141,9 +80,6 @@ MainWindow::MainWindow(QWidget *parent) :
     ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
-
-    //exeFileAndPath = "C:\\Users\\Liam\\source\\repos\\cppStringEditer\\Release\\Private CSGO.dll";
-
 }
 
 MainWindow::~MainWindow()
@@ -159,8 +95,18 @@ void MainWindow::on_listWidget_itemClicked(QListWidgetItem * item)
 
 void MainWindow::on_pushButton_clicked()
 {
-    if(currentItem != nullptr)
-        currentItem->setText(ui->textEdit->toPlainText());
+    if(exeFileAndPath == nullptr)
+        return;
+
+    QString path = QString(exeFileAndPath);
+
+    QStringList args;
+
+    args << "/select," << QDir::toNativeSeparators(path);
+
+    QProcess *process = new QProcess(this);
+    process->start("explorer.exe", args);
+
 }
 
 void MainWindow::on_pushButton_2_clicked()
@@ -186,25 +132,40 @@ void MainWindow::on_pushButton_2_clicked()
 
 void MainWindow::on_actionopen_triggered()
 {
-    delete[] exeFileAndPath;
-    stringRefrences.clear();
-    ui->listWidget->clear();
-    currentItem = nullptr;
-    ui->textEdit->setText("");
-    free(fileData);
-
     QString getFile = QFileDialog::getOpenFileName();
     if(getFile.isEmpty())
         return;
 
+    std::string oldString;
+    if(exeFileAndPath!=nullptr)
+        oldString = exeFileAndPath;
+
+    delete[] exeFileAndPath;
     QByteArray inUtf8 = getFile.toUtf8();
-    exeFileAndPath = new char[inUtf8.size()+1]();
+    exeFileAndPath = new char[inUtf8.size()+2]();
     memcpy(exeFileAndPath,(void*)inUtf8.data(),inUtf8.size());
+
+    if(loadBinary(exeFileAndPath, fileData, fileLenght)==false){
+        if(oldString.size()!=0)
+            exeFileAndPath = (char*)oldString.c_str();
+        return;
+    }
+
+    stringRefrences.clear();
+    ui->listWidget->clear();
+    currentItem = nullptr;
+    ui->textEdit->setText("");
 
     loadInStrings(exeFileAndPath);
 }
 
+void MainWindow::on_textEdit_textChanged()
+{
+    if(currentItem != nullptr)
+        currentItem->setText(ui->textEdit->toPlainText());
+}
 
-
-
-
+void MainWindow::on_actionexit_triggered()
+{
+    exit(0);
+}

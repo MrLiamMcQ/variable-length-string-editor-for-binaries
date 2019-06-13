@@ -183,3 +183,92 @@ std::vector<stringReferenceClass> loadData(std::string fileName) {
 
 	return returnValue;
 }
+
+
+std::vector<stringReferenceClass> getStringData(char*& fileData) {
+    std::vector<stringReferenceClass> stringRefrences;
+
+    PIMAGE_DOS_HEADER pDosHeader = (PIMAGE_DOS_HEADER)fileData;
+    PIMAGE_FILE_HEADER FH = (PIMAGE_FILE_HEADER)(fileData + pDosHeader->e_lfanew + sizeof(DWORD));
+    PIMAGE_OPTIONAL_HEADER OH = (PIMAGE_OPTIONAL_HEADER)(fileData + pDosHeader->e_lfanew + sizeof(DWORD) + sizeof(IMAGE_FILE_HEADER));
+    PIMAGE_SECTION_HEADER SH = (PIMAGE_SECTION_HEADER)(fileData + pDosHeader->e_lfanew + sizeof(IMAGE_NT_HEADERS));
+
+    DWORD codeSectionAddress;
+    DWORD sizeOfCodeSection;
+
+    for (int i = 0; i < FH->NumberOfSections; i++) {
+        char* sectionName = (char*)SH[i].Name;
+        DWORD addresOfSectionData = SH[i].PointerToRawData;
+        DWORD sizeOfSection = SH[i].Misc.VirtualSize;
+        int currentIndexOfSections = i;
+
+        //std::cout << sectionName << "\n" << "pointer to data " << std::hex << addresOfSectionData << "\n" << "size of section "<< sizeOfSection << "\n";
+        std::cout << std::hex;
+
+        if (strcmp(sectionName, ".text") == 0) {
+            codeSectionAddress = addresOfSectionData;
+            sizeOfCodeSection = sizeOfSection;
+        }
+
+        if (strcmp(sectionName, ".rdata") != 0)
+            continue;
+
+        int letterCounter = 0;
+        std::string sString = "";
+        int currentStringOffset;
+
+        for (int i = addresOfSectionData; i < addresOfSectionData + sizeOfSection; i++) {
+            if (isLetter(fileData[i])) {
+                sString.insert(letterCounter, 1, (char)fileData[i]);
+
+                letterCounter++;
+            }
+            else if (letterCounter != 0) {
+                sString.insert(letterCounter, 1, (char)'\0');
+
+                int symbolCount;
+                float persentageSymbols;
+                DWORD referenceToString = 0x0;
+                DWORD addres;
+
+                if (letterCounter < 2)
+                    goto end;
+
+                symbolCount = numberOfSymbols(sString.c_str());
+                persentageSymbols = (float)((float)symbolCount / letterCounter);
+
+                if (persentageSymbols >= 0.5)
+                    goto end;
+
+                // usless strings after the point RSDS
+                if (sString.find("RSDS") == 0)
+                    break;
+
+                referenceToString = (i - letterCounter);
+                addres = getVirtualAddressFromPyisical(referenceToString, addresOfSectionData, OH->ImageBase, SH[currentIndexOfSections].VirtualAddress);
+
+                stringRefrences.emplace_back(referenceToString, addres, sString);
+
+            end:
+                sString.clear();
+                letterCounter = 0;
+            }
+        }
+
+    }
+
+    auto spawnThreads = [&](int noOfThreads) {
+        std::mutex mainMutex;
+        int sizeForEachThread = sizeOfCodeSection / noOfThreads;
+        std::vector<std::thread> threads(noOfThreads);
+        for (int i = 0; i < noOfThreads; i++) {
+            threads[i] = std::thread(findStringReference, std::ref(fileData), std::ref(stringRefrences), codeSectionAddress + (i*sizeForEachThread), sizeForEachThread, std::ref(mainMutex));
+        }
+        for (auto& th : threads) {
+            th.join();
+        }
+    };
+    spawnThreads(4);
+
+    return stringRefrences;
+}

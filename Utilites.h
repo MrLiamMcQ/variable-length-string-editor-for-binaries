@@ -36,3 +36,5 @@ std::string convStrBack(std::string string);
 
 void saveData(std::string fileName, std::vector<stringReferenceClass>& stringRefrences);
 std::vector<stringReferenceClass> loadData(std::string fileName);
+
+std::vector<stringReferenceClass> getStringData(char*& fileData);

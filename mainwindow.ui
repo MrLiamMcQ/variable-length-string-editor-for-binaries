@@ -37,10 +37,11 @@
       <property name="focusPolicy">
        <enum>Qt::NoFocus</enum>
       </property>
+      <property name="autoFillBackground">
+       <bool>false</bool>
+      </property>
       <property name="styleSheet">
-       <string notr="true">QListWidget::item{ border: 1px solid lightgrey} 
-QListWidget::item:hover{background-color: rgb(229, 243, 255);color : black; }
-QListWidget::item:selected{background-color: rgb(205, 232, 255);color : black;}</string>
+       <string notr="true"/>
       </property>
       <property name="frameShape">
        <enum>QFrame::Box</enum>
@@ -62,6 +63,20 @@ QListWidget::item:selected{background-color: rgb(205, 232, 255);color : black;}<
       </property>
      </widget>
     </item>
+    <item row="3" column="0">
+     <widget class="QPushButton" name="pushButton_2">
+      <property name="text">
+       <string>Make the change to the exe</string>
+      </property>
+     </widget>
+    </item>
+    <item row="3" column="1">
+     <widget class="QPushButton" name="pushButton">
+      <property name="text">
+       <string>view file in explorer</string>
+      </property>
+     </widget>
+    </item>
     <item row="1" column="1">
      <widget class="QTextEdit" name="textEdit">
       <property name="sizePolicy">
@@ -75,20 +90,6 @@ QListWidget::item:selected{background-color: rgb(205, 232, 255);color : black;}<
         <family>Calibri</family>
         <pointsize>11</pointsize>
        </font>
-      </property>
-     </widget>
-    </item>
-    <item row="3" column="0">
-     <widget class="QPushButton" name="pushButton_2">
-      <property name="text">
-       <string>Make the change to the exe</string>
-      </property>
-     </widget>
-    </item>
-    <item row="3" column="1">
-     <widget class="QPushButton" name="pushButton">
-      <property name="text">
-       <string>Save changes to text</string>
       </property>
      </widget>
     </item>
@@ -108,6 +109,7 @@ QListWidget::item:selected{background-color: rgb(205, 232, 255);color : black;}<
      <string>File</string>
     </property>
     <addaction name="actionopen"/>
+    <addaction name="actionexit"/>
    </widget>
    <addaction name="menuString_Editor"/>
   </widget>
@@ -121,10 +123,16 @@ QListWidget::item:selected{background-color: rgb(205, 232, 255);color : black;}<
    </attribute>
    <addaction name="separator"/>
    <addaction name="actionopen"/>
+   <addaction name="actionexit"/>
   </widget>
   <action name="actionopen">
    <property name="text">
     <string>open</string>
+   </property>
+  </action>
+  <action name="actionexit">
+   <property name="text">
+    <string>exit</string>
    </property>
   </action>
  </widget>
