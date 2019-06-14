@@ -109,10 +109,10 @@ void saveData(std::string fileName, std::vector<stringReferenceClass>& stringRef
 		DWORD markerEndOfDwords = 0x99889988;
 		fwrite(&markerEndOfDwords, 1, 4, saveFile);//DWORD marker for start of strings
 
-		fwrite(stringRefrences[i].changedString.c_str(), 1, stringRefrences[i].changedString.size() + 1, saveFile);
+        fwrite(stringRefrences[i].changedString.c_str(), 1, stringRefrences[i].changedString.size() , saveFile);//
 		DWORD endOfString = 0x90;
 		fwrite(&endOfString, 1, 1, saveFile); // nop seperated strings 90
-		fwrite(stringRefrences[i].string.c_str(), 1, stringRefrences[i].string.size() + 1, saveFile);
+        fwrite(stringRefrences[i].string.c_str(), 1, stringRefrences[i].string.size(), saveFile);
 		DWORD endOfClassMarker = 0xCC;
 		if (i == stringRefrences.size() - 1)
 			endOfClassMarker = endOfFileMarker;

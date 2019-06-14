@@ -18,7 +18,6 @@
 #include <QtWidgets/QMenu>
 #include <QtWidgets/QMenuBar>
 #include <QtWidgets/QPushButton>
-#include <QtWidgets/QStatusBar>
 #include <QtWidgets/QTextEdit>
 #include <QtWidgets/QToolBar>
 #include <QtWidgets/QWidget>
@@ -30,6 +29,7 @@ class Ui_MainWindow
 public:
     QAction *actionopen;
     QAction *actionexit;
+    QAction *actionrevert_changes_to_exe;
     QWidget *centralWidget;
     QGridLayout *gridLayout;
     QListWidget *listWidget;
@@ -38,7 +38,7 @@ public:
     QTextEdit *textEdit;
     QMenuBar *menuBar;
     QMenu *menuString_Editor;
-    QStatusBar *statusBar;
+    QMenu *menuoptions;
     QToolBar *mainToolBar;
 
     void setupUi(QMainWindow *MainWindow)
@@ -50,6 +50,9 @@ public:
         actionopen->setObjectName(QStringLiteral("actionopen"));
         actionexit = new QAction(MainWindow);
         actionexit->setObjectName(QStringLiteral("actionexit"));
+        actionexit->setEnabled(true);
+        actionrevert_changes_to_exe = new QAction(MainWindow);
+        actionrevert_changes_to_exe->setObjectName(QStringLiteral("actionrevert_changes_to_exe"));
         centralWidget = new QWidget(MainWindow);
         centralWidget->setObjectName(QStringLiteral("centralWidget"));
         gridLayout = new QGridLayout(centralWidget);
@@ -103,6 +106,7 @@ public:
         font1.setFamily(QStringLiteral("Calibri"));
         font1.setPointSize(11);
         textEdit->setFont(font1);
+        textEdit->setStyleSheet(QStringLiteral(""));
 
         gridLayout->addWidget(textEdit, 1, 1, 1, 1);
 
@@ -112,20 +116,21 @@ public:
         menuBar->setGeometry(QRect(0, 0, 718, 21));
         menuString_Editor = new QMenu(menuBar);
         menuString_Editor->setObjectName(QStringLiteral("menuString_Editor"));
+        menuoptions = new QMenu(menuBar);
+        menuoptions->setObjectName(QStringLiteral("menuoptions"));
         MainWindow->setMenuBar(menuBar);
-        statusBar = new QStatusBar(MainWindow);
-        statusBar->setObjectName(QStringLiteral("statusBar"));
-        MainWindow->setStatusBar(statusBar);
         mainToolBar = new QToolBar(MainWindow);
         mainToolBar->setObjectName(QStringLiteral("mainToolBar"));
+        mainToolBar->setEnabled(true);
         MainWindow->addToolBar(Qt::TopToolBarArea, mainToolBar);
 
         menuBar->addAction(menuString_Editor->menuAction());
+        menuBar->addAction(menuoptions->menuAction());
         menuString_Editor->addAction(actionopen);
         menuString_Editor->addAction(actionexit);
         mainToolBar->addSeparator();
         mainToolBar->addAction(actionopen);
-        mainToolBar->addAction(actionexit);
+        mainToolBar->addAction(actionrevert_changes_to_exe);
 
         retranslateUi(MainWindow);
 
@@ -137,9 +142,16 @@ public:
         MainWindow->setWindowTitle(QApplication::translate("MainWindow", "MainWindow", nullptr));
         actionopen->setText(QApplication::translate("MainWindow", "open", nullptr));
         actionexit->setText(QApplication::translate("MainWindow", "exit", nullptr));
+        actionrevert_changes_to_exe->setText(QApplication::translate("MainWindow", "revert changes to exe", nullptr));
         pushButton_2->setText(QApplication::translate("MainWindow", "Make the change to the exe", nullptr));
         pushButton->setText(QApplication::translate("MainWindow", "view file in explorer", nullptr));
+        textEdit->setHtml(QApplication::translate("MainWindow", "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n"
+"<html><head><meta name=\"qrichtext\" content=\"1\" /><style type=\"text/css\">\n"
+"p, li { white-space: pre-wrap; }\n"
+"</style></head><body style=\" font-family:'Calibri'; font-size:11pt; font-weight:400; font-style:normal;\">\n"
+"<p style=\"-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><br /></p></body></html>", nullptr));
         menuString_Editor->setTitle(QApplication::translate("MainWindow", "File", nullptr));
+        menuoptions->setTitle(QApplication::translate("MainWindow", "options", nullptr));
     } // retranslateUi
 
 };

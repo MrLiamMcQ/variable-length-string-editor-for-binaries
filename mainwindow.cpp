@@ -10,6 +10,14 @@
 #include <QColor>
 #include "Shlobj.h"
 #include <QProcess>
+#include <QtWidgets>
+
+void saveExe(char*& exeData,int fileLen,char* filePath){
+    FILE* newFile;
+    fopen_s(&newFile, filePath,"wb");
+    fwrite(exeData,1,fileLen,newFile);
+    fclose(newFile);
+}
 
 bool loadBinary(const char* filePath,char*& fileData,int& fileLenght) {
     free(fileData);
@@ -33,6 +41,24 @@ bool loadBinary(const char* filePath,char*& fileData,int& fileLenght) {
         return false;
     }
 
+    bool found_text = false;
+    bool found_rdata = false;
+    PIMAGE_SECTION_HEADER SH = (PIMAGE_SECTION_HEADER)(buffer + pDosHeader->e_lfanew + sizeof(IMAGE_NT_HEADERS));
+    for(int i=0;i<FH->NumberOfSections;i++){
+        if(strcmp((char*)SH[i].Name, ".text") == 0)
+            found_text = true;
+        if(strcmp((char*)SH[i].Name,".rdata")==0)
+            found_rdata = true;
+    }
+
+    if(!found_rdata || !found_text){
+        QMessageBox Msgbox;
+        Msgbox.setText("could not find .text or .rdata\nthis could be due to it being packed or not being c/c++ compiled program\nor not useing a traditional compiler or it could be very old");
+        Msgbox.exec();
+        return false;
+    }
+
+
     fileData = buffer;
     fileLenght = tempFileLenght;
     return true;
@@ -43,12 +69,14 @@ char* exeFileAndPath;
 std::vector<stringReferenceClass> stringRefrences;
 char* fileData;
 int fileLenght;
-
+std::string saveFilePath;
+DWORD uniqueIdentifyer_strSec = 0x99887766;
+// bug where \0 are added to strings
 bool MainWindow::loadInStrings(char* fileLocation){
     if(fileLocation==NULL)
         return false;
 
-    std::string saveFilePath = fileLocation;
+    saveFilePath = fileLocation;
     saveFilePath.append(".txt");
 
     struct stat buffer;
@@ -60,16 +88,31 @@ bool MainWindow::loadInStrings(char* fileLocation){
     }
 
     for (auto& a : stringRefrences) {
-        QListWidgetItem* item = new QListWidgetItem(a.string.c_str());
+        QListWidgetItem* item;
+        if(a.changedString.size()>1)
+            item = new QListWidgetItem(a.changedString.c_str());
+        else item = new QListWidgetItem(a.string.c_str());
 
         if(a.stringReferenceLocations.size()>0)
             item->setForeground(Qt::darkGreen);//item->setBackground(QColor("#e7eecc"));
         else item->setForeground(Qt::darkRed);//item->setBackground(QColor("#7fc97f"));
 
-        ui->listWidget->addItem(item);
+        QLabel* label = new QLabel();
+        label->setFixedHeight(9);
+        label->setText(QString::number(a.stringReferenceLocations.size()));
+        label->setAlignment(Qt::AlignRight);
+        label->setStyleSheet("font: 7pt 'Calibri';");
 
-        //QWidget *widget = new QWidget();
-        //ui->listWidget->setItemWidget(item,widget);
+        QHBoxLayout *layout = new QHBoxLayout();
+        layout->setAlignment(Qt::AlignTop);
+        layout->addWidget(label);
+
+        QWidget *widget = new QWidget();
+        widget->setLayout(layout);
+
+        ui->listWidget->addItem(item);
+        ui->listWidget->setItemWidget(item,widget);
+
     }
 
     return true;
@@ -113,7 +156,7 @@ void MainWindow::on_pushButton_2_clicked()
 {
     auto editString = [&](int index,std::string newString) {
         stringRefrences[index].changedString = newString;
-        openSectionHeader(fileData, fileLenght, 0x99887766, ".rdata", IMAGE_SCN_CNT_INITIALIZED_DATA | IMAGE_SCN_MEM_READ, stringRefrences);
+        openSectionHeader(fileData, fileLenght, uniqueIdentifyer_strSec, ".rdata", IMAGE_SCN_CNT_INITIALIZED_DATA | IMAGE_SCN_MEM_READ, stringRefrences);
         stringRefrences[index].editString(fileData);
     };
 
@@ -122,12 +165,8 @@ void MainWindow::on_pushButton_2_clicked()
             editString(i,ui->listWidget->item(i)->text().toStdString());
     };
 
-    FILE* newFile;
-    fopen_s(&newFile, exeFileAndPath,"wb");
-    const char* words = exeFileAndPath;
-    int error = errno;
-    fwrite(fileData,1,fileLenght,newFile);
-    fclose(newFile);
+    saveExe(fileData,fileLenght,exeFileAndPath);
+    saveData(saveFilePath, stringRefrences);
 }
 
 void MainWindow::on_actionopen_triggered()
@@ -168,4 +207,25 @@ void MainWindow::on_textEdit_textChanged()
 void MainWindow::on_actionexit_triggered()
 {
     exit(0);
+}
+
+void MainWindow::on_actionrevert_changes_to_exe_triggered()
+{
+    if(exeFileAndPath == nullptr)
+        return;
+
+    std::pair<int,int> posData = findPosOfUniqIdentity(fileData,uniqueIdentifyer_strSec);
+    if(posData.first == -1)
+        return;
+    if(posData.first != posData.second-1)
+        return;
+
+    for (auto& a : stringRefrences) {
+        if (a.stringReferenceLocations.size() > 0){
+            a.undoStringEdit(fileData);
+            a.changedString = "";
+        }
+    }
+    deleateLastSection(fileData,fileLenght);
+    saveExe(fileData,fileLenght,exeFileAndPath);
 }

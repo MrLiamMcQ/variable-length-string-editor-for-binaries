@@ -104,36 +104,42 @@ void deleateLastSection(char*& programData, int& dataSize) {
 	ZeroMemory(addressOfLastSectionHeader, sizeof(IMAGE_SECTION_HEADER));
 }
 
+// function to find position of unique identifyer
+std::pair<int,int> findPosOfUniqIdentity(char*& programData,DWORD uniqueIdentifyer){
+
+    PIMAGE_DOS_HEADER pDosHeader = (PIMAGE_DOS_HEADER)programData;
+    PIMAGE_FILE_HEADER FH = (PIMAGE_FILE_HEADER)(programData + pDosHeader->e_lfanew + sizeof(DWORD));
+   // PIMAGE_OPTIONAL_HEADER OH = (PIMAGE_OPTIONAL_HEADER)(programData + pDosHeader->e_lfanew + sizeof(DWORD) + sizeof(IMAGE_FILE_HEADER));
+    PIMAGE_SECTION_HEADER SH = (PIMAGE_SECTION_HEADER)(programData + pDosHeader->e_lfanew + sizeof(IMAGE_NT_HEADERS));
+
+    int foundPos = -1;
+    int numOfSections = FH->NumberOfSections;
+
+    for (int i = 0; i < numOfSections; i++) {
+        int startOfSectionHeader = SH[i].PointerToRawData;
+        int numCorrect = 0;
+        for (int j = 0; j < 4; j++) {
+            if (programData[(startOfSectionHeader)+j] == (char)(uniqueIdentifyer >> (j * 8)))
+                numCorrect++;
+        }
+        if (numCorrect != 4)
+            continue;
+
+        foundPos = i;
+    }
+
+    return std::make_pair(foundPos,numOfSections);
+}
+
 bool openSectionHeader(char*& programData, int& dataSize, DWORD uniqueIdentifyer, const char* nameOfSection, DWORD charicteristecs, std::vector<stringReferenceClass>& stringsToEmbed) {
 
-	PIMAGE_DOS_HEADER pDosHeader = (PIMAGE_DOS_HEADER)programData;
-	PIMAGE_FILE_HEADER FH = (PIMAGE_FILE_HEADER)(programData + pDosHeader->e_lfanew + sizeof(DWORD));
-	PIMAGE_OPTIONAL_HEADER OH = (PIMAGE_OPTIONAL_HEADER)(programData + pDosHeader->e_lfanew + sizeof(DWORD) + sizeof(IMAGE_FILE_HEADER));
-	PIMAGE_SECTION_HEADER SH = (PIMAGE_SECTION_HEADER)(programData + pDosHeader->e_lfanew + sizeof(IMAGE_NT_HEADERS));
+    std::pair<int,int> posData = findPosOfUniqIdentity(programData,uniqueIdentifyer);
 
-	// not working should not be finding unique identifyer
-
-	bool foundItem = false;
-	for (int i = 0; i < FH->NumberOfSections; i++) {
-
-		int startOfSectionHeader = SH[i].PointerToRawData;
-		int numCorrect = 0;
-		for (int j = 0; j < 4; j++) {
-			if (programData[(startOfSectionHeader)+j] == (char)(uniqueIdentifyer >> (j * 8)))
-				numCorrect++;
-		}
-		if (numCorrect != 4)
-			continue;
-
-		foundItem = true;
-		// found section header it already exists
-		if (i != FH->NumberOfSections - 1)
-			continue;
-
+    if(posData.first == posData.second - 1){// if the section with the uniqie id is the last section
 		deleateLastSection(programData, dataSize);
 		writeNewSection(programData, dataSize, uniqueIdentifyer, nameOfSection, charicteristecs, stringsToEmbed);
-	}
-	if (!foundItem)
+    }
+    else if (posData.first == -1)
 		writeNewSection(programData, dataSize, uniqueIdentifyer, nameOfSection, charicteristecs, stringsToEmbed);
 
 	return 0;

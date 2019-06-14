@@ -31,6 +31,8 @@ private slots:
 
     void on_actionexit_triggered();
 
+    void on_actionrevert_changes_to_exe_triggered();
+
 private:
     Ui::MainWindow *ui;
 };
