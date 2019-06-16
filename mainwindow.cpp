@@ -11,6 +11,7 @@
 #include "Shlobj.h"
 #include <QProcess>
 #include <QtWidgets>
+#include <instructionsmenu.h>
 
 void saveExe(char*& exeData,int fileLen,char* filePath){
     FILE* newFile;
@@ -71,7 +72,7 @@ char* fileData;
 int fileLenght;
 std::string saveFilePath;
 DWORD uniqueIdentifyer_strSec = 0x99887766;
-// bug where \0 are added to strings
+
 bool MainWindow::loadInStrings(char* fileLocation){
     if(fileLocation==NULL)
         return false;
@@ -90,12 +91,16 @@ bool MainWindow::loadInStrings(char* fileLocation){
     for (auto& a : stringRefrences) {
         QListWidgetItem* item;
         if(a.changedString.size()>1)
-            item = new QListWidgetItem(a.changedString.c_str());
-        else item = new QListWidgetItem(a.string.c_str());
+            item = new QListWidgetItem(QString::fromStdWString(a.changedString));
+        else item = new QListWidgetItem(QString::fromStdWString(a.string));
 
         if(a.stringReferenceLocations.size()>0)
             item->setForeground(Qt::darkGreen);//item->setBackground(QColor("#e7eecc"));
         else item->setForeground(Qt::darkRed);//item->setBackground(QColor("#7fc97f"));
+
+        ui->listWidget->addItem(item);
+
+        if(stringRefrences.size() < 500){
 
         QLabel* label = new QLabel();
         label->setFixedHeight(9);
@@ -109,15 +114,14 @@ bool MainWindow::loadInStrings(char* fileLocation){
 
         QWidget *widget = new QWidget();
         widget->setLayout(layout);
-
-        ui->listWidget->addItem(item);
         ui->listWidget->setItemWidget(item,widget);
 
+        }
     }
 
     return true;
 }
-
+// fix crashing
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow)
@@ -154,15 +158,15 @@ void MainWindow::on_pushButton_clicked()
 
 void MainWindow::on_pushButton_2_clicked()
 {
-    auto editString = [&](int index,std::string newString) {
+    auto editString = [&](int index,std::wstring newString) {
         stringRefrences[index].changedString = newString;
         openSectionHeader(fileData, fileLenght, uniqueIdentifyer_strSec, ".rdata", IMAGE_SCN_CNT_INITIALIZED_DATA | IMAGE_SCN_MEM_READ, stringRefrences);
         stringRefrences[index].editString(fileData);
     };
 
     for(int i =0;i<stringRefrences.size();i++){
-        if(ui->listWidget->item(i)->text().remove(QChar::Null) != QString::fromStdString(stringRefrences[i].string).remove(QChar::Null))
-            editString(i,ui->listWidget->item(i)->text().toStdString());
+        if(ui->listWidget->item(i)->text().remove(QChar::Null) != QString::fromStdWString(stringRefrences[i].string).remove(QChar::Null))
+            editString(i,ui->listWidget->item(i)->text().toStdWString());
     };
 
     saveExe(fileData,fileLenght,exeFileAndPath);
@@ -223,9 +227,16 @@ void MainWindow::on_actionrevert_changes_to_exe_triggered()
     for (auto& a : stringRefrences) {
         if (a.stringReferenceLocations.size() > 0){
             a.undoStringEdit(fileData);
-            a.changedString = "";
+            a.changedString = L"";
         }
     }
     deleateLastSection(fileData,fileLenght);
     saveExe(fileData,fileLenght,exeFileAndPath);
+    saveData(saveFilePath, stringRefrences);
+}
+
+void MainWindow::on_actioninstructions_triggered()
+{
+    instructionsMenu instMenu;
+    instMenu.exec();
 }

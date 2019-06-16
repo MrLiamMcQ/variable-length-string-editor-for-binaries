@@ -15,6 +15,13 @@
   </property>
   <widget class="QWidget" name="centralWidget">
    <layout class="QGridLayout" name="gridLayout">
+    <item row="4" column="1">
+     <widget class="QPushButton" name="pushButton">
+      <property name="text">
+       <string>view file in explorer</string>
+      </property>
+     </widget>
+    </item>
     <item row="1" column="0">
      <widget class="QListWidget" name="listWidget">
       <property name="sizePolicy">
@@ -63,20 +70,6 @@
       </property>
      </widget>
     </item>
-    <item row="3" column="0">
-     <widget class="QPushButton" name="pushButton_2">
-      <property name="text">
-       <string>Make the change to the exe</string>
-      </property>
-     </widget>
-    </item>
-    <item row="3" column="1">
-     <widget class="QPushButton" name="pushButton">
-      <property name="text">
-       <string>view file in explorer</string>
-      </property>
-     </widget>
-    </item>
     <item row="1" column="1">
      <widget class="QTextEdit" name="textEdit">
       <property name="sizePolicy">
@@ -103,7 +96,29 @@ p, li { white-space: pre-wrap; }
       </property>
      </widget>
     </item>
+    <item row="4" column="0">
+     <widget class="QPushButton" name="pushButton_2">
+      <property name="text">
+       <string>Make the change to the exe</string>
+      </property>
+     </widget>
+    </item>
    </layout>
+  </widget>
+  <widget class="QToolBar" name="mainToolBar">
+   <property name="enabled">
+    <bool>true</bool>
+   </property>
+   <attribute name="toolBarArea">
+    <enum>TopToolBarArea</enum>
+   </attribute>
+   <attribute name="toolBarBreak">
+    <bool>false</bool>
+   </attribute>
+   <addaction name="separator"/>
+   <addaction name="actionopen"/>
+   <addaction name="actioninstructions"/>
+   <addaction name="actionrevert_changes_to_exe"/>
   </widget>
   <widget class="QMenuBar" name="menuBar">
    <property name="geometry">
@@ -125,23 +140,11 @@ p, li { white-space: pre-wrap; }
     <property name="title">
      <string>options</string>
     </property>
+    <addaction name="actionrevert_changes_to_exe"/>
+    <addaction name="actioninstructions"/>
    </widget>
    <addaction name="menuString_Editor"/>
    <addaction name="menuoptions"/>
-  </widget>
-  <widget class="QToolBar" name="mainToolBar">
-   <property name="enabled">
-    <bool>true</bool>
-   </property>
-   <attribute name="toolBarArea">
-    <enum>TopToolBarArea</enum>
-   </attribute>
-   <attribute name="toolBarBreak">
-    <bool>false</bool>
-   </attribute>
-   <addaction name="separator"/>
-   <addaction name="actionopen"/>
-   <addaction name="actionrevert_changes_to_exe"/>
   </widget>
   <action name="actionopen">
    <property name="text">
@@ -159,6 +162,11 @@ p, li { white-space: pre-wrap; }
   <action name="actionrevert_changes_to_exe">
    <property name="text">
     <string>revert changes to exe</string>
+   </property>
+  </action>
+  <action name="actioninstructions">
+   <property name="text">
+    <string>instructions</string>
    </property>
   </action>
  </widget>

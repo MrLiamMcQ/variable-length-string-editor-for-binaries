@@ -3,31 +3,32 @@
 #include "Utilites.h"
 
 struct stringReferenceClass {
-	DWORD addressOfString;
-	DWORD referenceOfString;
-	std::string string;
-	std::vector<DWORD> stringReferenceLocations;
+    bool originWasWchar;
+    DWORD addressOfString;
+    DWORD referenceOfString;
+    std::wstring string;
+    std::vector<DWORD> stringReferenceLocations;
 
-	std::string changedString;
-	DWORD changedStringAddress;
+    std::wstring changedString;
+    DWORD changedStringAddress;
 
-	stringReferenceClass() {}
-	stringReferenceClass(DWORD addressOfString, DWORD referenceOfString, std::string string) {
-		this->addressOfString = addressOfString;
-		this->referenceOfString = referenceOfString;
-		this->string = string;
-	}
+    stringReferenceClass() {}
+    stringReferenceClass(DWORD addressOfString, DWORD referenceOfString, std::wstring string,bool originWasWchar) {
+        this->addressOfString = addressOfString;
+        this->referenceOfString = referenceOfString;
+        this->string = string;
+        this->originWasWchar = originWasWchar;
+    }
 
-	void editString(char*& data);
-	void undoStringEdit(char*& data);
+    void editString(char*& data);
+    void undoStringEdit(char*& data);
 };
-
 // reverse bytes ( location in file	of string   -	location in file of header		+  image base   +      RVA)
 DWORD getVirtualAddressFromPyisical(DWORD locOfDataPhysical, DWORD headerLocPhysical, DWORD imageBase, DWORD RVA);
 
 bool isLetter(char letter);
 
-int numberOfSymbols(const char* string);
+int numberOfSymbols(const wchar_t* string);
 
 void findStringReference(char*& fileData, std::vector<stringReferenceClass>& referencesToFind, int beginAddress, int amountToSerch, std::mutex& mainMutex);
 

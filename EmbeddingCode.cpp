@@ -9,76 +9,83 @@ DWORD align(DWORD size, DWORD align, DWORD addr) {
 
 std::vector<DWORD> writeNewSection(char*& programData, int& dataSize, DWORD uniqueIdentifyer, const char* nameOfSection, DWORD charicteristecs, std::vector<stringReferenceClass>& stringsToEmbed) {
 
-	PIMAGE_DOS_HEADER pDosHeader_setup = (PIMAGE_DOS_HEADER)programData;
-	PIMAGE_OPTIONAL_HEADER OH_setup = (PIMAGE_OPTIONAL_HEADER)(programData + pDosHeader_setup->e_lfanew + sizeof(DWORD) + sizeof(IMAGE_FILE_HEADER));
+    PIMAGE_DOS_HEADER pDosHeader_setup = (PIMAGE_DOS_HEADER)programData;
+    PIMAGE_OPTIONAL_HEADER OH_setup = (PIMAGE_OPTIONAL_HEADER)(programData + pDosHeader_setup->e_lfanew + sizeof(DWORD) + sizeof(IMAGE_FILE_HEADER));
 
-	// get size of new section and extend size appropriately
+    // get size of new section and extend size appropriately
 
-	int sizeOfNewSection = 20;
-	std::vector<DWORD> addressesOfStrings;
+    int sizeOfNewSection = 20;
+    std::vector<DWORD> addressesOfStrings;
 
-	for (auto& string : stringsToEmbed) {
-		if (string.changedString == "")
-			continue;
+    for (auto& string : stringsToEmbed) {
+        if (string.changedString == L"")
+            continue;
 
-		sizeOfNewSection += (string.changedString.size()+1);
-	};
+        sizeOfNewSection += (string.changedString.size()+1);
+    };
 
-	sizeOfNewSection = align(sizeOfNewSection, OH_setup->FileAlignment, 0);
+    sizeOfNewSection = align(sizeOfNewSection, OH_setup->FileAlignment, 0);
 
-	char* newProgramData = new char[dataSize+sizeOfNewSection]();
-	memcpy(newProgramData,programData, dataSize);
+    char* newProgramData = new char[dataSize+sizeOfNewSection]();
+    memcpy(newProgramData,programData, dataSize);
 
-	delete[] programData;
-	programData = newProgramData;
+    delete[] programData;
+    programData = newProgramData;
 
-	PIMAGE_DOS_HEADER pDosHeader = (PIMAGE_DOS_HEADER)programData;
-	PIMAGE_FILE_HEADER FH = (PIMAGE_FILE_HEADER)(programData + pDosHeader->e_lfanew + sizeof(DWORD));
-	PIMAGE_OPTIONAL_HEADER OH = (PIMAGE_OPTIONAL_HEADER)(programData + pDosHeader->e_lfanew + sizeof(DWORD) + sizeof(IMAGE_FILE_HEADER));
-	PIMAGE_SECTION_HEADER SH = (PIMAGE_SECTION_HEADER)(programData + pDosHeader->e_lfanew + sizeof(IMAGE_NT_HEADERS));
+    PIMAGE_DOS_HEADER pDosHeader = (PIMAGE_DOS_HEADER)programData;
+    PIMAGE_FILE_HEADER FH = (PIMAGE_FILE_HEADER)(programData + pDosHeader->e_lfanew + sizeof(DWORD));
+    PIMAGE_OPTIONAL_HEADER OH = (PIMAGE_OPTIONAL_HEADER)(programData + pDosHeader->e_lfanew + sizeof(DWORD) + sizeof(IMAGE_FILE_HEADER));
+    PIMAGE_SECTION_HEADER SH = (PIMAGE_SECTION_HEADER)(programData + pDosHeader->e_lfanew + sizeof(IMAGE_NT_HEADERS));
 
-	// write new section's header into data
+    // write new section's header into data
 
-	ZeroMemory(&SH[FH->NumberOfSections], sizeof(IMAGE_SECTION_HEADER));
-	CopyMemory(&SH[FH->NumberOfSections].Name, nameOfSection, 8);
+    ZeroMemory(&SH[FH->NumberOfSections], sizeof(IMAGE_SECTION_HEADER));
+    CopyMemory(&SH[FH->NumberOfSections].Name, nameOfSection, 8);
 
-	SH[FH->NumberOfSections].Misc.VirtualSize = align(sizeOfNewSection, OH->SectionAlignment, 0);
-	SH[FH->NumberOfSections].VirtualAddress = align(SH[FH->NumberOfSections - 1].Misc.VirtualSize, OH->SectionAlignment, SH[FH->NumberOfSections - 1].VirtualAddress);
+    SH[FH->NumberOfSections].Misc.VirtualSize = align(sizeOfNewSection, OH->SectionAlignment, 0);
+    SH[FH->NumberOfSections].VirtualAddress = align(SH[FH->NumberOfSections - 1].Misc.VirtualSize, OH->SectionAlignment, SH[FH->NumberOfSections - 1].VirtualAddress);
 
-	// compiler makes theses section header values all zero later on without warning or reason so have to save the value for use
-	DWORD savedRVA = SH[FH->NumberOfSections].VirtualAddress;
+    // compiler makes theses section header values all zero later on without warning or reason so have to save the value for use
+    DWORD savedRVA = SH[FH->NumberOfSections].VirtualAddress;
 
-	SH[FH->NumberOfSections].SizeOfRawData = align(sizeOfNewSection, OH->FileAlignment, 0);
-	SH[FH->NumberOfSections].PointerToRawData = dataSize;
-	SH[FH->NumberOfSections].Characteristics = charicteristecs;
+    SH[FH->NumberOfSections].SizeOfRawData = align(sizeOfNewSection, OH->FileAlignment, 0);
+    SH[FH->NumberOfSections].PointerToRawData = dataSize;
+    SH[FH->NumberOfSections].Characteristics = charicteristecs;
 
-	OH->SizeOfImage = SH[FH->NumberOfSections].VirtualAddress + SH[FH->NumberOfSections].Misc.VirtualSize;
-	FH->NumberOfSections += 1;
+    OH->SizeOfImage = SH[FH->NumberOfSections].VirtualAddress + SH[FH->NumberOfSections].Misc.VirtualSize;
+    FH->NumberOfSections += 1;
 
-	// write data into new sections data
+    // write data into new sections data
 
-	for (int i = 0; i < 4; i++) {
-		newProgramData[(dataSize)+i] = (uniqueIdentifyer >> (i * 8));
-	}
+    for (int i = 0; i < 4; i++) {
+        newProgramData[(dataSize)+i] = (uniqueIdentifyer >> (i * 8));
+    }
 
-	DWORD currentMemLoc = 10 + dataSize;
-	for (auto& string : stringsToEmbed) {
+    DWORD currentMemLoc = 10 + dataSize;
+    for (auto& string : stringsToEmbed) {
 
-		if (string.changedString == "")
-			continue;
+        if (string.changedString == L"")
+            continue;
 
-		for (int i = 0; i < string.changedString.size(); i++) {
-			programData[currentMemLoc + i] = string.changedString[i];
-			if (i == 0)						
-				string.changedStringAddress = getVirtualAddressFromPyisical(currentMemLoc, dataSize, OH->ImageBase, savedRVA);
-		}
-		currentMemLoc += (string.changedString.size() + 1);
-	};
+        for (int i = 0; i < string.changedString.size(); i++) {
+            if (string.originWasWchar)
+                programData[currentMemLoc + (i*2)] = string.changedString[i];
+            else
+                programData[currentMemLoc + i] = string.changedString[i];
+            if (i == 0)
+                string.changedStringAddress = getVirtualAddressFromPyisical(currentMemLoc, dataSize, OH->ImageBase, savedRVA);
+        }
 
-	dataSize += sizeOfNewSection;
+        currentMemLoc += (string.changedString.size() + 2);
+        if (string.originWasWchar)
+            currentMemLoc += string.changedString.size();
+    };
 
-	return addressesOfStrings;
+    dataSize += sizeOfNewSection;
+
+    return addressesOfStrings;
 }
+
 
 void deleateLastSection(char*& programData, int& dataSize) {
 	PIMAGE_DOS_HEADER pDosHeader = (PIMAGE_DOS_HEADER)programData;

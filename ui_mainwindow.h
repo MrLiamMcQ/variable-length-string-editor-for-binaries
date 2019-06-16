@@ -30,16 +30,17 @@ public:
     QAction *actionopen;
     QAction *actionexit;
     QAction *actionrevert_changes_to_exe;
+    QAction *actioninstructions;
     QWidget *centralWidget;
     QGridLayout *gridLayout;
-    QListWidget *listWidget;
-    QPushButton *pushButton_2;
     QPushButton *pushButton;
+    QListWidget *listWidget;
     QTextEdit *textEdit;
+    QPushButton *pushButton_2;
+    QToolBar *mainToolBar;
     QMenuBar *menuBar;
     QMenu *menuString_Editor;
     QMenu *menuoptions;
-    QToolBar *mainToolBar;
 
     void setupUi(QMainWindow *MainWindow)
     {
@@ -53,12 +54,19 @@ public:
         actionexit->setEnabled(true);
         actionrevert_changes_to_exe = new QAction(MainWindow);
         actionrevert_changes_to_exe->setObjectName(QStringLiteral("actionrevert_changes_to_exe"));
+        actioninstructions = new QAction(MainWindow);
+        actioninstructions->setObjectName(QStringLiteral("actioninstructions"));
         centralWidget = new QWidget(MainWindow);
         centralWidget->setObjectName(QStringLiteral("centralWidget"));
         gridLayout = new QGridLayout(centralWidget);
         gridLayout->setSpacing(6);
         gridLayout->setContentsMargins(11, 11, 11, 11);
         gridLayout->setObjectName(QStringLiteral("gridLayout"));
+        pushButton = new QPushButton(centralWidget);
+        pushButton->setObjectName(QStringLiteral("pushButton"));
+
+        gridLayout->addWidget(pushButton, 4, 1, 1, 1);
+
         listWidget = new QListWidget(centralWidget);
         listWidget->setObjectName(QStringLiteral("listWidget"));
         QSizePolicy sizePolicy(QSizePolicy::Minimum, QSizePolicy::Expanding);
@@ -85,16 +93,6 @@ public:
 
         gridLayout->addWidget(listWidget, 1, 0, 1, 1);
 
-        pushButton_2 = new QPushButton(centralWidget);
-        pushButton_2->setObjectName(QStringLiteral("pushButton_2"));
-
-        gridLayout->addWidget(pushButton_2, 3, 0, 1, 1);
-
-        pushButton = new QPushButton(centralWidget);
-        pushButton->setObjectName(QStringLiteral("pushButton"));
-
-        gridLayout->addWidget(pushButton, 3, 1, 1, 1);
-
         textEdit = new QTextEdit(centralWidget);
         textEdit->setObjectName(QStringLiteral("textEdit"));
         QSizePolicy sizePolicy1(QSizePolicy::Expanding, QSizePolicy::Expanding);
@@ -110,7 +108,16 @@ public:
 
         gridLayout->addWidget(textEdit, 1, 1, 1, 1);
 
+        pushButton_2 = new QPushButton(centralWidget);
+        pushButton_2->setObjectName(QStringLiteral("pushButton_2"));
+
+        gridLayout->addWidget(pushButton_2, 4, 0, 1, 1);
+
         MainWindow->setCentralWidget(centralWidget);
+        mainToolBar = new QToolBar(MainWindow);
+        mainToolBar->setObjectName(QStringLiteral("mainToolBar"));
+        mainToolBar->setEnabled(true);
+        MainWindow->addToolBar(Qt::TopToolBarArea, mainToolBar);
         menuBar = new QMenuBar(MainWindow);
         menuBar->setObjectName(QStringLiteral("menuBar"));
         menuBar->setGeometry(QRect(0, 0, 718, 21));
@@ -119,18 +126,17 @@ public:
         menuoptions = new QMenu(menuBar);
         menuoptions->setObjectName(QStringLiteral("menuoptions"));
         MainWindow->setMenuBar(menuBar);
-        mainToolBar = new QToolBar(MainWindow);
-        mainToolBar->setObjectName(QStringLiteral("mainToolBar"));
-        mainToolBar->setEnabled(true);
-        MainWindow->addToolBar(Qt::TopToolBarArea, mainToolBar);
 
+        mainToolBar->addSeparator();
+        mainToolBar->addAction(actionopen);
+        mainToolBar->addAction(actioninstructions);
+        mainToolBar->addAction(actionrevert_changes_to_exe);
         menuBar->addAction(menuString_Editor->menuAction());
         menuBar->addAction(menuoptions->menuAction());
         menuString_Editor->addAction(actionopen);
         menuString_Editor->addAction(actionexit);
-        mainToolBar->addSeparator();
-        mainToolBar->addAction(actionopen);
-        mainToolBar->addAction(actionrevert_changes_to_exe);
+        menuoptions->addAction(actionrevert_changes_to_exe);
+        menuoptions->addAction(actioninstructions);
 
         retranslateUi(MainWindow);
 
@@ -143,13 +149,14 @@ public:
         actionopen->setText(QApplication::translate("MainWindow", "open", nullptr));
         actionexit->setText(QApplication::translate("MainWindow", "exit", nullptr));
         actionrevert_changes_to_exe->setText(QApplication::translate("MainWindow", "revert changes to exe", nullptr));
-        pushButton_2->setText(QApplication::translate("MainWindow", "Make the change to the exe", nullptr));
+        actioninstructions->setText(QApplication::translate("MainWindow", "instructions", nullptr));
         pushButton->setText(QApplication::translate("MainWindow", "view file in explorer", nullptr));
         textEdit->setHtml(QApplication::translate("MainWindow", "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n"
 "<html><head><meta name=\"qrichtext\" content=\"1\" /><style type=\"text/css\">\n"
 "p, li { white-space: pre-wrap; }\n"
 "</style></head><body style=\" font-family:'Calibri'; font-size:11pt; font-weight:400; font-style:normal;\">\n"
 "<p style=\"-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><br /></p></body></html>", nullptr));
+        pushButton_2->setText(QApplication::translate("MainWindow", "Make the change to the exe", nullptr));
         menuString_Editor->setTitle(QApplication::translate("MainWindow", "File", nullptr));
         menuoptions->setTitle(QApplication::translate("MainWindow", "options", nullptr));
     } // retranslateUi

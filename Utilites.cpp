@@ -1,15 +1,15 @@
 #include "Utilites.h"
 
 
-bool isLetter(char letter) {
+bool isLetter(wchar_t letter) {
 	if ((int)letter > 31 && (int)letter < 127 || letter== '\n')
 		return true;
 	return false;
 }
 
-int numberOfSymbols(const char* string) {
-	int noOfSymbols = strlen(string);
-	for (int i = 0; i < strlen(string) - 1; i++) {
+int numberOfSymbols(const wchar_t* string) {
+    int noOfSymbols = wcslen(string);
+    for (int i = 0; i < wcslen(string) - 1; i++) {
 		if ((int)string[i] > 64 && (int)string[i] < 91) {
 			noOfSymbols--;
 		}
@@ -93,100 +93,104 @@ std::string convStrBack(std::string string) {
 }
 
 void saveData(std::string fileName, std::vector<stringReferenceClass>& stringRefrences) {
-	FILE* saveFile;
-	fopen_s(&saveFile, fileName.c_str(), "wb");
-	char endOfFileMarker = 0xAA;
+    FILE* saveFile;
+    fopen_s(&saveFile, fileName.c_str(), "wb");
+    wchar_t endOfFileMarker = 0xAAAA;
 
-	for (int i = 0; i < stringRefrences.size(); i++) {
-		fwrite(&stringRefrences[i].addressOfString, 1, 4, saveFile);//DWORD
-		fwrite(&stringRefrences[i].changedStringAddress, 1, 4, saveFile);//DWORD
-		fwrite(&stringRefrences[i].referenceOfString, 1, 4, saveFile);//DWORD
+    for (int i = 0; i < stringRefrences.size(); i++) {
+        fwrite(&stringRefrences[i].originWasWchar, 1, 1, saveFile);
+        fwrite(&stringRefrences[i].addressOfString, 1, 4, saveFile);//DWORD
+        fwrite(&stringRefrences[i].changedStringAddress, 1, 4, saveFile);//DWORD
+        fwrite(&stringRefrences[i].referenceOfString, 1, 4, saveFile);//DWORD
 
-		for (int j = 0; j < stringRefrences[i].stringReferenceLocations.size(); j++) {
-			fwrite(&stringRefrences[i].stringReferenceLocations[j], 1, 4, saveFile);//DWORD
-		}
+        for (int j = 0; j < stringRefrences[i].stringReferenceLocations.size(); j++) {
+            fwrite(&stringRefrences[i].stringReferenceLocations[j], 1, 4, saveFile);//DWORD
+        }
 
-		DWORD markerEndOfDwords = 0x99889988;
-		fwrite(&markerEndOfDwords, 1, 4, saveFile);//DWORD marker for start of strings
+        DWORD markerEndOfDwords = 0x99889988;
+        fwrite(&markerEndOfDwords, 1, 4, saveFile);//DWORD marker for start of strings
 
-        fwrite(stringRefrences[i].changedString.c_str(), 1, stringRefrences[i].changedString.size() , saveFile);//
-		DWORD endOfString = 0x90;
-		fwrite(&endOfString, 1, 1, saveFile); // nop seperated strings 90
-        fwrite(stringRefrences[i].string.c_str(), 1, stringRefrences[i].string.size(), saveFile);
-		DWORD endOfClassMarker = 0xCC;
-		if (i == stringRefrences.size() - 1)
-			endOfClassMarker = endOfFileMarker;
-		fwrite(&endOfClassMarker, 1, 1, saveFile); // 0xCC marker for end of class 0xAA marker end of file
-	}
-	fclose(saveFile);
+        fwrite(stringRefrences[i].changedString.c_str(), 2, stringRefrences[i].changedString.size(), saveFile);// removed + 1
+        wchar_t endOfString = 0x9090;
+        fwrite(&endOfString, 1, 2, saveFile); // double nop seperated strings 9090
+        fwrite(stringRefrences[i].string.c_str(), 2, stringRefrences[i].string.size(), saveFile);// removed + 1
+        wchar_t endOfClassMarker = 0xCCCC;
+        if (i == stringRefrences.size() - 1)
+            endOfClassMarker = endOfFileMarker;
+        fwrite(&endOfClassMarker, 1, 2, saveFile); // 0xCC marker for end of class 0xAA marker end of file
+    }
+    fclose(saveFile);
 }
 
 std::vector<stringReferenceClass> loadData(std::string fileName) {
-	std::vector<stringReferenceClass> returnValue;
+    std::vector<stringReferenceClass> returnValue;
 
-	FILE* loadFile;
-	fopen_s(&loadFile, fileName.c_str(), "rb");
-	bool fileEndReached = false;
+    FILE* loadFile;
+    fopen_s(&loadFile, fileName.c_str(), "rb");
+    bool fileEndReached = false;
 
-	do {
-		stringReferenceClass newRefClass;
+    do {
+        stringReferenceClass newRefClass;
 
-		DWORD addressOfString;
-		DWORD changedStringAddress;
-		DWORD referenceOfString;
-		fread(&addressOfString, 1, 4, loadFile);//DWORD
-		fread(&changedStringAddress, 1, 4, loadFile);//DWORD
-		fread(&referenceOfString, 1, 4, loadFile);//DWORD
+        bool wasWchar;
+        DWORD addressOfString;
+        DWORD changedStringAddress;
+        DWORD referenceOfString;
+        fread(&wasWchar, 1, 1, loadFile);
+        fread(&addressOfString, 1, 4, loadFile);//DWORD
+        fread(&changedStringAddress, 1, 4, loadFile);//DWORD
+        fread(&referenceOfString, 1, 4, loadFile);//DWORD
 
-		DWORD currentDWORD;
-		std::vector<DWORD> stringReferenceLocations;
-		while (1) {
-			fread(&currentDWORD, 1, 4, loadFile);
-			if (currentDWORD != 0x99889988)
-				stringReferenceLocations.push_back(currentDWORD);
-			else break;
-		}
+        DWORD currentDWORD;
+        std::vector<DWORD> stringReferenceLocations;
+        while (1) {
+            fread(&currentDWORD, 1, 4, loadFile);
+            if (currentDWORD != 0x99889988)
+                stringReferenceLocations.push_back(currentDWORD);
+            else break;
+        }
 
-		std::string changedString;
-		std::string string;
-		bool firstString = true;
-		while (1) {
-			char currentChar;
-			fread(&currentChar, 1, 1, loadFile);
-			if (currentChar != (char)0x90 && firstString)
-				changedString.push_back(currentChar);
-			else if (currentChar != (char)0xCC && currentChar != (char)0xAA) {
-                if (currentChar != (char)0x90)
-					string.push_back(currentChar);
-				firstString = false;
-			}
-			else if (currentChar == (char)0xAA) {
-				fileEndReached = true;
-				break;
-			}
-			else break;
-		}
+        std::wstring changedString = L"";
+        std::wstring string = L"";
+        bool firstString = true;
+        while (1) {
+            wchar_t currentChar;
+            fread(&currentChar, 1, 2, loadFile);
+            if (currentChar != (wchar_t)0x9090 && firstString)
+                changedString.push_back(currentChar);
+            else if (currentChar != (wchar_t)0xCCCC && currentChar != (wchar_t)0xAAAA) {
+                if (currentChar != (wchar_t)0x9090)
+                    string.push_back(currentChar);
+                firstString = false;
+            }
+            else if (currentChar == (wchar_t)0xAAAA) {
+                fileEndReached = true;
+                break;
+            }
+            else break;
+        }
 
-		newRefClass.addressOfString = addressOfString;
-		newRefClass.changedString = changedString;
-		newRefClass.changedStringAddress = changedStringAddress;
-		newRefClass.referenceOfString = referenceOfString;
-		newRefClass.string = string;
-		newRefClass.stringReferenceLocations = stringReferenceLocations;
+        newRefClass.originWasWchar = wasWchar;
+        newRefClass.addressOfString = addressOfString;
+        newRefClass.changedString = changedString;
+        newRefClass.changedStringAddress = changedStringAddress;
+        newRefClass.referenceOfString = referenceOfString;
+        newRefClass.string = string;
+        newRefClass.stringReferenceLocations = stringReferenceLocations;
 
-		returnValue.push_back(newRefClass);
+        returnValue.push_back(newRefClass);
 
-	} while (!fileEndReached);
+    } while (!fileEndReached);
 
 
-	fclose(loadFile);
+    fclose(loadFile);
 
-	return returnValue;
+    return returnValue;
 }
 
 
 std::vector<stringReferenceClass> getStringData(char*& fileData) {
-    std::vector<stringReferenceClass> stringRefrences;
+    std::vector<stringReferenceClass> stringRefrences;// test reading and writeing file
 
     PIMAGE_DOS_HEADER pDosHeader = (PIMAGE_DOS_HEADER)fileData;
     PIMAGE_FILE_HEADER FH = (PIMAGE_FILE_HEADER)(fileData + pDosHeader->e_lfanew + sizeof(DWORD));
@@ -202,9 +206,6 @@ std::vector<stringReferenceClass> getStringData(char*& fileData) {
         DWORD sizeOfSection = SH[i].Misc.VirtualSize;
         int currentIndexOfSections = i;
 
-        //std::cout << sectionName << "\n" << "pointer to data " << std::hex << addresOfSectionData << "\n" << "size of section "<< sizeOfSection << "\n";
-        std::cout << std::hex;
-
         if (strcmp(sectionName, ".text") == 0) {
             codeSectionAddress = addresOfSectionData;
             sizeOfCodeSection = sizeOfSection;
@@ -213,50 +214,55 @@ std::vector<stringReferenceClass> getStringData(char*& fileData) {
         if (strcmp(sectionName, ".rdata") != 0)
             continue;
 
-        int letterCounter = 0;
-        std::string sString = "";
-        int currentStringOffset;
-
+        std::wstring sString;
+        std::wstring charString;
         for (int i = addresOfSectionData; i < addresOfSectionData + sizeOfSection; i++) {
-            if (isLetter(fileData[i])) {
-                sString.insert(letterCounter, 1, (char)fileData[i]);
-
-                letterCounter++;
-            }
-            else if (letterCounter != 0) {
-                sString.insert(letterCounter, 1, (char)'\0');
-
-                int symbolCount;
-                float persentageSymbols;
-                DWORD referenceToString = 0x0;
-                DWORD addres;
-
-                if (letterCounter < 2)
-                    goto end;
-
-                symbolCount = numberOfSymbols(sString.c_str());
-                persentageSymbols = (float)((float)symbolCount / letterCounter);
-
-                if (persentageSymbols >= 0.5)
-                    goto end;
-
-                // usless strings after the point RSDS
-                if (sString.find("RSDS") == 0)
+            // find char string put into charString
+            wchar_t wChar = (wchar_t)(fileData[i]);
+            if (isLetter(wChar))
+                charString += wChar;
+            else if(charString.size()>3){
+                if (charString.find(L"RSDS")==0)
                     break;
-
-                referenceToString = (i - letterCounter);
-                addres = getVirtualAddressFromPyisical(referenceToString, addresOfSectionData, OH->ImageBase, SH[currentIndexOfSections].VirtualAddress);
-
-                stringRefrences.emplace_back(referenceToString, addres, sString);
-
-            end:
-                sString.clear();
-                letterCounter = 0;
+                DWORD addressOfString = (i - charString.size());
+                DWORD addres = getVirtualAddressFromPyisical(addressOfString, addresOfSectionData, OH->ImageBase, SH[currentIndexOfSections].VirtualAddress);
+                stringRefrences.emplace_back(addressOfString, addres, charString,false);
+                charString.clear();
             }
+            else if (wChar == NULL)
+                charString.clear();
+
+            // find wchars put into sString
+            bool isNull = false;
+            wchar_t curentWchar = (wchar_t)(fileData[i] << 8) + fileData[i + 1];
+            if ((int)fileData[i] == 0 && (int)fileData[i + 1] == 0)
+                isNull = true;
+            if (isLetter(curentWchar)) {
+                sString += curentWchar;
+            }
+            else if (sString.size() > 3 && isNull) {
+
+                int symbolCount = numberOfSymbols(sString.c_str());
+                float persentageSymbols = (float)((float)symbolCount / sString.size());
+
+                if (persentageSymbols >= 0.5) {
+                    sString.clear();
+                    continue;
+                }
+
+                DWORD addressOfString = (i+1 - (sString.size()*2));
+                DWORD addres = getVirtualAddressFromPyisical(addressOfString, addresOfSectionData, OH->ImageBase, SH[currentIndexOfSections].VirtualAddress);
+                stringRefrences.emplace_back(addressOfString, addres, sString,true);
+
+                sString.clear();
+            }
+            else if (isNull)
+                sString.clear();
         }
 
     }
 
+    //multithreded find strings references in code
     auto spawnThreads = [&](int noOfThreads) {
         std::mutex mainMutex;
         int sizeForEachThread = sizeOfCodeSection / noOfThreads;

@@ -31,13 +31,16 @@ SOURCES += \
         mainwindow.cpp \
     EmbeddingCode.cpp \
     Utilites.cpp \
-    pch.cpp
+    pch.cpp \
+    instructionsmenu.cpp
 
 HEADERS += \
         mainwindow.h \
     EmbeddingCode.h \
     Utilites.h \
-    pch.h
+    pch.h \
+    instructionsmenu.h
 
 FORMS += \
-        mainwindow.ui
+        mainwindow.ui \
+    instructionsmenu.ui

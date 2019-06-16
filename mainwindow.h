@@ -33,6 +33,8 @@ private slots:
 
     void on_actionrevert_changes_to_exe_triggered();
 
+    void on_actioninstructions_triggered();
+
 private:
     Ui::MainWindow *ui;
 };
