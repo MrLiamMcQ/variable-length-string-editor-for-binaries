@@ -104,7 +104,7 @@
     </rect>
    </property>
    <property name="text">
-    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;the string may not be contained on the exe itself.&lt;/p&gt;&lt;p&gt;the file may have its strings section commpressed.&lt;/p&gt;&lt;p&gt;it may be an image and not actualy text.&lt;/p&gt;&lt;p&gt;it may be stored in the code section. this verstion cant currently find that.&lt;/p&gt;&lt;p&gt;there may be a bug in my code.&lt;/p&gt;&lt;p&gt;you may have settings that stop your string from showing up.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;the string may not be contained on the exe itself.&lt;/p&gt;&lt;p&gt;the file may have its strings section commpressed or it might be packed or obfuscated.&lt;/p&gt;&lt;p&gt;it may be an image and not actualy text.&lt;/p&gt;&lt;p&gt;it may be stored in the code section. this verstion cant currently find that.&lt;/p&gt;&lt;p&gt;you may have settings that stop your string from showing up.&lt;/p&gt;&lt;p&gt;some strings are stored in a the resources so cannot be edited here as i dont know how they are referenced in macheane code.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
    </property>
   </widget>
   <widget class="QLabel" name="label_7">
@@ -136,21 +136,21 @@
   <widget class="QLabel" name="label_9">
    <property name="geometry">
     <rect>
-     <x>350</x>
-     <y>130</y>
+     <x>400</x>
+     <y>200</y>
      <width>271</width>
      <height>71</height>
     </rect>
    </property>
    <property name="text">
-    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; color:#00aa00;&quot;&gt;Green means a reference to the string has been found&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; color:#00aa00;&quot;&gt;in the code and so can be edited&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; color:#00aa00;&quot;&gt;Green means a reference to the string has been &lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; color:#00aa00;&quot;&gt;found in the code and so can be edited&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
    </property>
   </widget>
   <widget class="QLabel" name="label_10">
    <property name="geometry">
     <rect>
-     <x>350</x>
-     <y>190</y>
+     <x>400</x>
+     <y>270</y>
      <width>191</width>
      <height>51</height>
     </rect>

@@ -23,8 +23,27 @@ void saveExe(char*& exeData,int fileLen,char* filePath){
 bool loadBinary(const char* filePath,char*& fileData,int& fileLenght) {
     free(fileData);
 
+    auto errorBox = [](const char* errorMsg){
+        QMessageBox Msgbox;
+        Msgbox.setText(errorMsg);
+        Msgbox.exec();
+    };
+
+    errno =0;
     FILE* fileHandel;
     fopen_s(&fileHandel, filePath, "rb+");
+    int error = errno;
+
+    switch(error){
+        case 0: break;
+        case 13:
+            errorBox("Error - Permission to open the file is denied");
+            return false;
+        default:
+        errorBox("Error - could not open the file");
+        return false;
+    }
+
     fseek(fileHandel, 0, SEEK_END);
     int tempFileLenght = ftell(fileHandel);
     fseek(fileHandel, 0, SEEK_SET);
@@ -36,9 +55,7 @@ bool loadBinary(const char* filePath,char*& fileData,int& fileLenght) {
     PIMAGE_FILE_HEADER FH = (PIMAGE_FILE_HEADER)(buffer + pDosHeader->e_lfanew + sizeof(DWORD));
 
     if(FH->Machine != (WORD)0x14c){// not 32 bit
-        QMessageBox Msgbox;
-        Msgbox.setText("Error - binary selected is not 32 bit");
-        Msgbox.exec();
+        errorBox("Error - binary selected is not 32 bit");
         return false;
     }
 
@@ -53,9 +70,7 @@ bool loadBinary(const char* filePath,char*& fileData,int& fileLenght) {
     }
 
     if(!found_rdata || !found_text){
-        QMessageBox Msgbox;
-        Msgbox.setText("could not find .text or .rdata\nthis could be due to it being packed or not being c/c++ compiled program\nor not useing a traditional compiler or it could be very old");
-        Msgbox.exec();
+        errorBox("could not find .text or .rdata\nthis could be due to it being packed or not being c/c++ compiled program\nor not useing a traditional compiler or it could be very old");
         return false;
     }
 
@@ -85,6 +100,12 @@ bool MainWindow::loadInStrings(char* fileLocation){
         stringRefrences = loadData(saveFilePath);
     else {
         stringRefrences = getStringData(fileData);
+        if(stringRefrences.size()==0){
+            QMessageBox Msgbox;
+            Msgbox.setText("no strings found in the .rdata section");
+            Msgbox.exec();
+            return false;
+        }
         saveData(saveFilePath, stringRefrences);
     }
 
@@ -102,26 +123,26 @@ bool MainWindow::loadInStrings(char* fileLocation){
 
         if(stringRefrences.size() < 500){
 
-        QLabel* label = new QLabel();
-        label->setFixedHeight(9);
-        label->setText(QString::number(a.stringReferenceLocations.size()));
-        label->setAlignment(Qt::AlignRight);
-        label->setStyleSheet("font: 7pt 'Calibri';");
+            QLabel* label = new QLabel();
+            label->setFixedHeight(9);
+            label->setText(QString::number(a.stringReferenceLocations.size()));
+            label->setAlignment(Qt::AlignRight);
+            label->setStyleSheet("font: 7pt 'Calibri';");
 
-        QHBoxLayout *layout = new QHBoxLayout();
-        layout->setAlignment(Qt::AlignTop);
-        layout->addWidget(label);
+            QHBoxLayout *layout = new QHBoxLayout();
+            layout->setAlignment(Qt::AlignTop);
+            layout->addWidget(label);
 
-        QWidget *widget = new QWidget();
-        widget->setLayout(layout);
-        ui->listWidget->setItemWidget(item,widget);
+            QWidget *widget = new QWidget();
+            widget->setLayout(layout);
+            ui->listWidget->setItemWidget(item,widget);
 
         }
     }
 
     return true;
 }
-// fix crashing
+
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow)

@@ -60,7 +60,6 @@ void findStringReference(char*& fileData, std::vector<stringReferenceClass>& ref
 	for (int i = beginAddress; i < (beginAddress + amountToSerch); i += 1) {
 		for (auto& j : referencesToFind) {
 			if (j.referenceOfString == ((fileData[i] << 24) | (fileData[i + 1] << 16) | (fileData[i + 2] << 8) | fileData[i + 3])) {
-				//std::cout << "found " << j.referenceOfString << " " << j.string.c_str() << " " << i << std::endl;
 				mainMutex.lock();
 				j.stringReferenceLocations.push_back(i);
 				mainMutex.unlock();

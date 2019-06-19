@@ -88,7 +88,8 @@ public:
         listWidget->setEditTriggers(QAbstractItemView::DoubleClicked|QAbstractItemView::EditKeyPressed);
         listWidget->setProperty("showDropIndicator", QVariant(true));
         listWidget->setSpacing(1);
-        listWidget->setWordWrap(true);
+        listWidget->setUniformItemSizes(true);
+        listWidget->setWordWrap(false);
         listWidget->setSelectionRectVisible(true);
 
         gridLayout->addWidget(listWidget, 1, 0, 1, 1);

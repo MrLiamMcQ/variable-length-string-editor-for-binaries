@@ -62,8 +62,11 @@
       <property name="spacing">
        <number>1</number>
       </property>
-      <property name="wordWrap">
+      <property name="uniformItemSizes">
        <bool>true</bool>
+      </property>
+      <property name="wordWrap">
+       <bool>false</bool>
       </property>
       <property name="selectionRectVisible">
        <bool>true</bool>
